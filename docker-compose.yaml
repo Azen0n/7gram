@@ -1,0 +1,9 @@
+services:
+  bot:
+    container_name: sevengram_bot
+
+    build: .
+
+    # Include development dependencies when working locally
+    environment:
+      - UV_NO_DEV=0
