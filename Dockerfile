@@ -2,7 +2,7 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 # Install the project into
-WORKDIR /opt/src/app
+WORKDIR /opt/sevengram/app
 
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
@@ -20,16 +20,16 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --locked --no-install-project
+    uv sync --locked --no-install-project --group dev
 
 # Then, add the rest of the project source code and install it
 # Installing separately from its dependencies allows optimal layer caching
-COPY . /opt/src/app
+COPY . /opt/sevengram/app
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked
+    uv sync --locked --group dev
 
 # Place executables in the environment at the front of the path
-ENV PATH="/opt/src/app/.venv/bin:$PATH"
+ENV PATH="/opt/sevengram/app/.venv/bin:$PATH"
 
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
