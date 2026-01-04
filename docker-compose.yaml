@@ -3,8 +3,24 @@ services:
     container_name: sevengram_bot
     build: .
     volumes:
-      - ./sevengram:/opt/sevengram/app/sevengram
+      - ./:/opt/sevengram/app/
 
     # Include development dependencies when working locally
     environment:
       - UV_NO_DEV=0
+
+  postgres:
+    image: postgres:18-alpine
+    container_name: sevengram_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "${DB_PORT_HOST}:${DB_PORT_CONTAINER}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
