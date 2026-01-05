@@ -34,4 +34,4 @@ ENV PATH="/opt/sevengram/app/.venv/bin:$PATH"
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
 
-CMD ["uv", "run", "sevengram/bot.py"]
+CMD ["uv", "run", "-m", "sevengram.bot"]

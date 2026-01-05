@@ -1,6 +1,7 @@
-from config import settings
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+from sevengram.config import settings
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
