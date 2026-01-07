@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
+    BOT_USERNAME: str
     DB_HOST: str = 'postgres'
     DB_NAME: str
     DB_USER: str
