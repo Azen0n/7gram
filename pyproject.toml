@@ -17,6 +17,7 @@ lint = [
     "ruff",
 ]
 dev = [
+    "ipython",
     {include-group = "lint"},
 ]
 
