@@ -8,3 +8,7 @@ class BaseServiceError(Exception):
 
 class NotFoundError(BaseServiceError):
     """Object not found error."""
+
+
+class ApiError(Exception):
+    """External API error."""

@@ -1,4 +1,4 @@
-from pydantic import PostgresDsn
+from pydantic import HttpUrl, PostgresDsn
 from pydantic_settings import BaseSettings
 
 
@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_PORT_HOST: int
     DB_PORT_CONTAINER: int = 5432
+
+    SEVENTV_URL: HttpUrl
 
     class Config:
         env_file = '.env'

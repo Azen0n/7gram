@@ -5,6 +5,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
+from sevengram.api.seventv import SevenTvApiClient
+from sevengram.config import settings
 from sevengram.constants import EmojiPackInspectAction
 from sevengram.exceptions import ValidationError
 from sevengram.keyboards.emoji_pack import (
@@ -121,4 +123,11 @@ async def add_emoji(message: Message, state: FSMContext) -> None:
         raise ValidationError('URL must start with https://7tv.app/')
 
     emote_id = message.text.strip().split('/')[-1]
-    await message.answer(text=emote_id)
+
+    await message.answer(f'Fetching emote with id={emote_id} from 7TV...')
+
+    client = SevenTvApiClient(settings.SEVENTV_URL.encoded_string())
+    data = await client.fetch_emote(emote_id)
+    emote_name = data['emotes']['emote']['defaultName']
+
+    await message.answer(f'Emote name from 7TV: {emote_name}')
