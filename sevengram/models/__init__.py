@@ -1,3 +1,5 @@
+from .emote import Emote
+from .emote_source import EmoteSource
 from .sticker import Sticker
 from .sticker_set import StickerSet
 from .sticker_type import StickerType
@@ -8,4 +10,6 @@ __all__ = [
     'Sticker',
     'StickerSet',
     'StickerType',
+    'Emote',
+    'EmoteSource',
 ]

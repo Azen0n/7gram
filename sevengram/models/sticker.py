@@ -8,6 +8,7 @@ from sevengram.database.core import Base
 from sevengram.models.sticker_type import StickerType
 
 if TYPE_CHECKING:
+    from sevengram.models.emote import Emote
     from sevengram.models.sticker_set import StickerSet
 
 
@@ -15,10 +16,14 @@ class Sticker(Base):
     """A Sticker in Telegram."""
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    # TODO: Unique Sticker identifier in Telegram
+    external_id: Mapped[str | None] = mapped_column(unique=True)
+    """Unique identifier for the Sticker's file on a Telegram servers (file_unique_id)."""
     type: Mapped[StickerType] = mapped_column(Enum(StickerType))
     emoji: Mapped[str | None]
     """Emoji associated with the sticker."""
+
+    emote_id: Mapped[int] = mapped_column(ForeignKey('emote.id', ondelete='RESTRICT'))
+    emote: Mapped['Emote'] = relationship()
 
     sticker_set_id: Mapped[int] = mapped_column(
         ForeignKey('sticker_set.id', ondelete='CASCADE'),
