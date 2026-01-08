@@ -8,6 +8,8 @@ up:
 	docker compose up -d --remove-orphans
 down:
 	docker compose down
+restart:
+	docker restart sevengram_bot
 logs:
 	docker logs sevengram_bot
 ruff-format:
