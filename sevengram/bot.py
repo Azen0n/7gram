@@ -7,7 +7,7 @@ from aiogram.filters import CommandStart, ExceptionTypeFilter
 from aiogram.types import ErrorEvent, Message
 
 from sevengram.config import settings
-from sevengram.exceptions import ValidationError
+from sevengram.exceptions import BaseServiceError, ValidationError
 from sevengram.handlers import routers
 from sevengram.middlewares import UserMiddleware
 
@@ -22,6 +22,12 @@ async def command_start_handler(message: Message) -> None:
 @dp.error(ExceptionTypeFilter(ValidationError), F.update.message.as_('message'))
 async def validation_error_handler(event: ErrorEvent, message: Message):
     await message.answer(f'Validation error: {event.exception}')
+
+
+@dp.error(ExceptionTypeFilter(BaseServiceError), F.update.message.as_('message'))
+async def service_error_handler(event: ErrorEvent, message: Message):
+    """Handle service errors with a specific exception message."""
+    await message.answer(f'{event.exception}')
 
 
 @dp.error(F.update.message.as_('message'))

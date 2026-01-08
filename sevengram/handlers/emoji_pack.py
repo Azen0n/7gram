@@ -84,6 +84,7 @@ async def inspect_emoji_pack(query: CallbackQuery) -> None:
     emoji_pack = await EmojiPackGetService(id=callback_data.id).execute()
 
     await query.message.answer(
-        text=f'[{emoji_pack["title"]}](https://t.me/addemoji/{emoji_pack["name"]})',
+        text=f'[{emoji_pack.title}](https://t.me/addemoji/{emoji_pack.name})',
         parse_mode=ParseMode.MARKDOWN,
     )
+    await query.answer()
