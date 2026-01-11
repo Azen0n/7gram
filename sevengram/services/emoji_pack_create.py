@@ -3,10 +3,10 @@ from aiogram.exceptions import TelegramBadRequest
 
 from sevengram.config import settings
 from sevengram.database.core import get_session
-from sevengram.exceptions import BaseServiceError, ValidationError
+from sevengram.exceptions import ApiError, ValidationError
 from sevengram.models import StickerType, User
 from sevengram.repositories import EmojiPackRepository
-from sevengram.services.utils import emote, generate_sticker_set_name
+from sevengram.services.utils import generate_sticker_set_name, get_placeholder_emote
 
 
 class EmojiPackCreateService:
@@ -57,10 +57,10 @@ class EmojiPackCreateService:
                 name=name,
                 title=self._title,
                 sticker_type=StickerType.CUSTOM_EMOJI,
-                stickers=[emote],
+                stickers=[get_placeholder_emote()],
             )
         except TelegramBadRequest as e:
-            raise BaseServiceError(f'Telegram error: {e.message}') from e
+            raise ApiError(f'Telegram error: {e.message}') from e
 
     async def _create_in_database(self, name: str):
         """Create Emoji Pack in database and return its id."""

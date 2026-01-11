@@ -16,7 +16,7 @@ class EmojiPackListService:
     async def execute(self) -> list[StickerSet]:
         async with get_session() as session:
             emoji_pack_repository = EmojiPackRepository(session)
-            emoji_packs = await emoji_pack_repository.list(user=self._user)
+            emoji_packs = await emoji_pack_repository.list_all(user=self._user)
         if not emoji_packs:
             raise NotFoundError(
                 'You don’t have any Emoji Packs yet. '

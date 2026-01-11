@@ -4,6 +4,7 @@ from sqlalchemy import Enum, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sevengram.database.core import Base
+from sevengram.models.emote_format import EmoteFormat
 from sevengram.models.emote_source import EmoteSource
 
 
@@ -17,7 +18,9 @@ class Emote(Base):
     source: Mapped[EmoteSource] = mapped_column(Enum(EmoteSource))
     external_id: Mapped[str]
     """Emote identifier from external source."""
-    emoji: Mapped[str | None]
-    """Emoji associated with the sticker."""
+    name: Mapped[str]
+    file_url: Mapped[str]
+    """File URL from external source."""
+    format: Mapped[EmoteFormat] = mapped_column(Enum(EmoteFormat))
 
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

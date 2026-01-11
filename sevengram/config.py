@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     DB_PORT_HOST: int
     DB_PORT_CONTAINER: int = 5432
 
+    USER_AGENT: str
     SEVENTV_URL: HttpUrl
+    SEVENTV_API_URL: HttpUrl
 
     class Config:
         env_file = '.env'

@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from sevengram.models import StickerSet, StickerType, User
 from sevengram.repositories.base import BaseRepository
@@ -22,7 +23,7 @@ class EmojiPackRepository(BaseRepository):
         await self._session.flush()
         return emoji_pack
 
-    async def list(self, user: User) -> list[StickerSet]:
+    async def list_all(self, user: User) -> list[StickerSet]:
         """Select all user's Emoji Packs."""
         stmt = (
             select(StickerSet)
@@ -37,9 +38,13 @@ class EmojiPackRepository(BaseRepository):
 
     async def get(self, id: int) -> StickerSet | None:
         """Get an Emoji Pack by id."""
-        stmt = select(StickerSet).where(
-            StickerSet.id == id,
-            StickerSet.type == StickerType.CUSTOM_EMOJI,
+        stmt = (
+            select(StickerSet)
+            .where(
+                StickerSet.id == id,
+                StickerSet.type == StickerType.CUSTOM_EMOJI,
+            )
+            .options(joinedload(StickerSet.user))
         )
         result = await self._session.execute(stmt)
         return result.scalars().one_or_none()

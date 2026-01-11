@@ -3,19 +3,24 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.exceptions import TransportError
 
 from sevengram.api.base import BaseApiClient
+from sevengram.config import settings
 from sevengram.exceptions import ApiError
 
 
 class SevenTvApiClient(BaseApiClient):
     """7TV API client."""
 
-    async def fetch_emote(self, external_id: str) -> dict:
-        """Fetch a single 7TV emote."""
+    def _create_client(self) -> Client:
         transport = AIOHTTPTransport(
             url=self._base_url,
-            headers={'User-Agent': 'sevengram/0.1.0'},
+            headers={
+                'User-Agent': settings.USER_AGENT,
+            },
         )
-        client = Client(transport=transport)
+        return Client(transport=transport)
+
+    async def fetch_emote(self, external_id: str) -> dict:
+        """Fetch a single 7TV emote."""
         query = gql(
             """
             query getEmote($id: ID!) {
@@ -37,11 +42,11 @@ class SevenTvApiClient(BaseApiClient):
         )
         query.variable_values = {'id': external_id}
 
-        async with client as session:
+        async with self._client as session:
             try:
                 result = await session.execute(query)
+                emote_data = result['emotes']['emote']
             except TransportError as e:
-                session.close()
                 raise ApiError('Failed to fetch an emote.') from e
 
-        return result
+        return emote_data

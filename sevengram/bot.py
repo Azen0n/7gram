@@ -7,7 +7,7 @@ from aiogram.filters import CommandStart, ExceptionTypeFilter
 from aiogram.types import ErrorEvent, Message
 
 from sevengram.config import settings
-from sevengram.exceptions import BaseServiceError, ValidationError
+from sevengram.exceptions import ApiError, BaseServiceError, ValidationError
 from sevengram.handlers import routers
 from sevengram.middlewares import UserMiddleware
 
@@ -28,6 +28,12 @@ async def validation_error_handler(event: ErrorEvent, message: Message):
 async def service_error_handler(event: ErrorEvent, message: Message):
     """Handle service errors with a specific exception message."""
     await message.answer(f'{event.exception}')
+
+
+@dp.error(ExceptionTypeFilter(ApiError), F.update.message.as_('message'))
+async def api_error_handler(event: ErrorEvent, message: Message):
+    """Handle external API errors with a specific exception message."""
+    await message.answer(f'External API error: {event.exception}')
 
 
 @dp.error(F.update.message.as_('message'))

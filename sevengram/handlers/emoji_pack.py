@@ -5,10 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
-from sevengram.api.seventv import SevenTvApiClient
-from sevengram.config import settings
 from sevengram.constants import EmojiPackInspectAction
-from sevengram.exceptions import ValidationError
 from sevengram.keyboards.emoji_pack import (
     EmojiPackCallbackData,
     build_emoji_pack_inspect_keyboard,
@@ -16,6 +13,7 @@ from sevengram.keyboards.emoji_pack import (
 )
 from sevengram.models import User
 from sevengram.services import (
+    EmojiAddService,
     EmojiPackCreateService,
     EmojiPackGetService,
     EmojiPackListService,
@@ -90,6 +88,8 @@ async def inspect_emoji_pack(query: CallbackQuery, state: FSMContext) -> None:
     emoji_pack = await EmojiPackGetService(id=callback_data.id).execute()
 
     keyboard = build_emoji_pack_inspect_keyboard()
+    # Set active Emoji Pack
+    await state.update_data(inspect={'emoji_pack': emoji_pack})
     await state.set_state(EmojiPackInspectState.add_emoji)
 
     await query.message.answer(
@@ -119,15 +119,15 @@ async def add_emoji_waiting_for_url(query: CallbackQuery) -> None:
 @emoji_pack_router.message(EmojiPackInspectState.add_emoji)
 async def add_emoji(message: Message, state: FSMContext) -> None:
     """Handle a command to add a new Emoji to an Emoji Pack."""
-    if not message.text.startswith('https://7tv.app/'):
-        raise ValidationError('URL must start with https://7tv.app/')
+    data = await state.get_data()
 
-    emote_id = message.text.strip().split('/')[-1]
+    emote_name = await EmojiAddService(
+        bot=message.bot,
+        emoji_pack=data['inspect']['emoji_pack'],
+        emote_url=message.text,
+    ).execute()
 
-    await message.answer(f'Fetching emote with id={emote_id} from 7TV...')
-
-    client = SevenTvApiClient(settings.SEVENTV_URL.encoded_string())
-    data = await client.fetch_emote(emote_id)
-    emote_name = data['emotes']['emote']['defaultName']
-
-    await message.answer(f'Emote name from 7TV: {emote_name}')
+    await message.answer(
+        text=f'Emoji **{emote_name}** was successfully added!',
+        parse_mode=ParseMode.MARKDOWN,
+    )

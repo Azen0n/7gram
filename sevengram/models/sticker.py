@@ -16,8 +16,8 @@ class Sticker(Base):
     """A Sticker in Telegram."""
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    external_id: Mapped[str | None] = mapped_column(unique=True)
-    """Unique identifier for the Sticker's file on a Telegram servers (file_unique_id)."""
+    file_unique_id: Mapped[str | None] = mapped_column(unique=True)
+    """Unique identifier for the Sticker's file on a Telegram servers."""
     type: Mapped[StickerType] = mapped_column(Enum(StickerType))
     emoji: Mapped[str | None]
     """Emoji associated with the sticker."""
