@@ -8,7 +8,7 @@ from sevengram.api import seventv_client
 from sevengram.config import settings
 from sevengram.constants import DEFAULT_EMOJI
 from sevengram.database.core import get_session
-from sevengram.exceptions import ApiError, BaseServiceError, ValidationError
+from sevengram.exceptions import ApiError, ServiceError, ValidationError
 from sevengram.models import Emote, EmoteFormat, EmoteSource, Sticker, StickerSet
 from sevengram.repositories import EmojiRepository, EmoteRepository
 from sevengram.services.utils import EmoteConverter
@@ -41,35 +41,27 @@ class EmojiAddService:
 
         emote_id = self._parse_emote_id(path)
 
-        # Find an existing Emote
-        emote = await self._get_emote(emote_id)
+        async with get_session() as session:
+            emote_repository = EmoteRepository(session)
 
-        # Or create a new one
-        if emote is None:
-            emote_data = await seventv_client.fetch_emote(emote_id)
-            if emote_data is None:
-                raise ApiError('Emote not found.')
-
-            emote_name = emote_data['defaultName']
-            is_animated = emote_data['flags']['animated']
-
-            emote_format = EmoteFormat.VIDEO if is_animated else EmoteFormat.STATIC
-            file_url = self._extract_file_url(emote_data, emote_format)
-
-            emote = await self._create_emote(
+            # Find an existing Emote
+            emote = await emote_repository.get_by_external_id(
                 external_id=emote_id,
-                name=emote_name,
-                format=emote_format,
-                file_url=file_url,
+                source=EmoteSource.SEVENTV,
             )
 
-        await self._create_emoji(emote)
+            # Or create a new one
+            if emote is None:
+                emote = await self._fetch_and_create_emote(emote_repository, emote_id)
 
+        # Create Emoji in Telegram
         input_emoji = await self._prepare_input_emoji(emote)
-
         is_created = await self._add_in_telegram(input_emoji)
         if not is_created:
             raise ValidationError('Failed to add emoji. Please try again.')
+
+        # On success create in database
+        await self._create_emoji(emote)
 
         return emote.name
 
@@ -87,6 +79,31 @@ class EmojiAddService:
     def _parse_emote_id(self, url_path: str) -> str:
         return url_path.strip().split('/')[-1]
 
+    async def _fetch_and_create_emote(
+        self,
+        emote_repository: EmoteRepository,
+        emote_external_id: str,
+    ) -> Emote:
+        """Fetch an Emote from 7TV and create it in database."""
+        emote_data = await seventv_client.fetch_emote(emote_external_id)
+        if emote_data is None:
+            raise ApiError('Emote not found.')
+
+        emote_name = emote_data['defaultName']
+        is_animated = emote_data['flags']['animated']
+
+        emote_format = EmoteFormat.VIDEO if is_animated else EmoteFormat.STATIC
+        file_url = self._extract_file_url(emote_data, emote_format)
+
+        return await emote_repository.create(
+            file_id=None,
+            source=EmoteSource.SEVENTV,
+            external_id=emote_external_id,
+            name=emote_name,
+            file_url=file_url,
+            format=emote_format,
+        )
+
     def _extract_file_url(self, emote_data: dict, emote_format: EmoteFormat) -> str:
         if emote_format == EmoteFormat.VIDEO:
             file_extension = 'avif'
@@ -101,33 +118,7 @@ class EmojiAddService:
         try:
             return next(emote_images_filter)['url']
         except (StopIteration, KeyError) as e:
-            raise BaseServiceError('Failed to fetch emote image.') from e
-
-    async def _get_emote(self, external_id: str) -> Emote | None:
-        async with get_session() as session:
-            emote_repository = EmoteRepository(session)
-            return await emote_repository.get_by_external_id(
-                external_id=external_id,
-                source=EmoteSource.SEVENTV,
-            )
-
-    async def _create_emote(
-        self,
-        external_id: str,
-        name: str,
-        format: EmoteFormat,
-        file_url: str,
-    ) -> Emote:
-        async with get_session() as session:
-            emote_repository = EmoteRepository(session)
-            return await emote_repository.create(
-                file_id=None,
-                source=EmoteSource.SEVENTV,
-                external_id=external_id,
-                name=name,
-                file_url=file_url,
-                format=format,
-            )
+            raise ServiceError('Failed to extract emote image URL.') from e
 
     async def _create_emoji(self, emote: Emote) -> Sticker:
         async with get_session() as session:
