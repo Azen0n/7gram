@@ -9,8 +9,15 @@ from sevengram.config import settings
 from sevengram.constants import DEFAULT_EMOJI
 from sevengram.database.core import get_session
 from sevengram.exceptions import ApiError, ServiceError, ValidationError
-from sevengram.models import Emote, EmoteFormat, EmoteSource, Sticker, StickerSet
-from sevengram.repositories import EmojiRepository, EmoteRepository
+from sevengram.models import (
+    Emote,
+    EmoteFormat,
+    EmoteSource,
+    Sticker,
+    StickerSet,
+    StickerType,
+)
+from sevengram.repositories import EmoteRepository, StickerRepository
 from sevengram.services.utils import EmoteConverter
 
 
@@ -122,9 +129,10 @@ class EmojiAddService:
 
     async def _create_emoji(self, emote: Emote) -> Sticker:
         async with get_session() as session:
-            emoji_repository = EmojiRepository(session)
-            return await emoji_repository.create(
+            sticker_repository = StickerRepository(session)
+            return await sticker_repository.create(
                 file_unique_id=None,
+                type=StickerType.CUSTOM_EMOJI,
                 emoji=DEFAULT_EMOJI,
                 emote_id=emote.id,
                 sticker_set_id=self._emoji_pack.id,
