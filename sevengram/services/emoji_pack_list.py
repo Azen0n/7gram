@@ -1,7 +1,7 @@
 from sevengram.database.core import get_session
 from sevengram.exceptions import NotFoundError
-from sevengram.models import StickerSet, User
-from sevengram.repositories import EmojiPackRepository
+from sevengram.models import StickerSet, StickerType, User
+from sevengram.repositories import StickerSetRepository
 
 
 class EmojiPackListService:
@@ -15,11 +15,14 @@ class EmojiPackListService:
 
     async def execute(self) -> list[StickerSet]:
         async with get_session() as session:
-            emoji_pack_repository = EmojiPackRepository(session)
-            emoji_packs = await emoji_pack_repository.list_all(user=self._user)
-        if not emoji_packs:
+            sticker_set_repository = StickerSetRepository(session)
+            sticker_sets = await sticker_set_repository.list_all(
+                user=self._user,
+                type=StickerType.CUSTOM_EMOJI,
+            )
+        if not sticker_sets:
             raise NotFoundError(
                 'You don’t have any Emoji Packs yet. '
                 'Create your first one with the /addemojipack command.',
             )
-        return emoji_packs
+        return sticker_sets

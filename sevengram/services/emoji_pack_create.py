@@ -5,7 +5,7 @@ from sevengram.config import settings
 from sevengram.database.core import get_session
 from sevengram.exceptions import ApiError, ValidationError
 from sevengram.models import StickerType, User
-from sevengram.repositories import EmojiPackRepository
+from sevengram.repositories import StickerSetRepository
 from sevengram.services.utils import generate_sticker_set_name, get_placeholder_emote
 
 
@@ -65,9 +65,10 @@ class EmojiPackCreateService:
     async def _create_in_database(self, name: str):
         """Create Emoji Pack in database and return its id."""
         async with get_session() as session:
-            emoji_pack_repository = EmojiPackRepository(session)
-            await emoji_pack_repository.create(
+            sticker_set_repository = StickerSetRepository(session)
+            await sticker_set_repository.create(
                 user=self._user,
                 name=name,
                 title=self._title,
+                type=StickerType.CUSTOM_EMOJI,
             )
