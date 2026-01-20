@@ -2,7 +2,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from sevengram.constants import EmojiPackInspectAction
+from sevengram.constants import StickerSetInspectAction
 from sevengram.models import StickerSet
 
 
@@ -31,7 +31,7 @@ def build_emoji_pack_inspect_keyboard() -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(
                     text='Add Emoji',
-                    callback_data=EmojiPackInspectAction.ADD,
+                    callback_data=StickerSetInspectAction.ADD,
                 ),
             ],
         ],

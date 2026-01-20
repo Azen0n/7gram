@@ -1,8 +1,8 @@
 from enum import StrEnum, auto
 
 
-class EmojiPackInspectAction(StrEnum):
-    """Available actions while inspecting an Emoji Pack."""
+class StickerSetInspectAction(StrEnum):
+    """Available actions while inspecting a Sticker Set."""
 
     ADD = auto()
 

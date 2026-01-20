@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
-from sevengram.constants import EmojiPackInspectAction
+from sevengram.constants import StickerSetInspectAction
 from sevengram.keyboards.emoji_pack import (
     EmojiPackCallbackData,
     build_emoji_pack_inspect_keyboard,
@@ -106,7 +106,7 @@ async def inspect_emoji_pack(query: CallbackQuery, state: FSMContext) -> None:
 
 @emoji_pack_router.callback_query(
     EmojiPackInspectState.add_emoji,
-    F.data == EmojiPackInspectAction.ADD,
+    F.data == StickerSetInspectAction.ADD,
 )
 async def add_emoji_waiting_for_url(query: CallbackQuery) -> None:
     """Handle a command to add a new Emoji to an Emoji Pack.
