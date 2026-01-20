@@ -11,12 +11,12 @@ from sevengram.keyboards.emoji_pack import (
     build_emoji_pack_inspect_keyboard,
     build_emoji_pack_list_keyboard,
 )
-from sevengram.models import User
+from sevengram.models import StickerType, User
 from sevengram.services import (
     EmojiAddService,
-    EmojiPackCreateService,
     EmojiPackGetService,
     EmojiPackListService,
+    StickerSetCreateService,
 )
 
 emoji_pack_router = Router(name='emoji_pack')
@@ -51,9 +51,10 @@ async def process_title(message: Message, state: FSMContext, user: User) -> None
     await state.update_data(title=message.text)
     data = await state.get_data()
 
-    emoji_pack_name = await EmojiPackCreateService(
+    emoji_pack_name = await StickerSetCreateService(
         bot=message.bot,
         user=user,
+        type=StickerType.CUSTOM_EMOJI,
         **data,
     ).execute()
 

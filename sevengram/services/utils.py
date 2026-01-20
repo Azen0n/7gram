@@ -26,16 +26,6 @@ def generate_sticker_set_name(bot_username: str) -> str:
     return f'custom_{uuid.uuid4()}_by_{bot_username}'.replace('-', '')
 
 
-def get_placeholder_emote() -> InputSticker:
-    """Temporary placeholder emote from file system."""
-    return InputSticker(
-        sticker=BufferedInputFile.from_file(path='emote.png'),
-        format='static',
-        emoji_list=['😏'],
-        keywords=['forsenE'],
-    )
-
-
 class EmoteConverter:
     def __init__(
         self,

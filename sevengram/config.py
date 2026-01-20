@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     USER_AGENT: str
     SEVENTV_URL: HttpUrl
     SEVENTV_API_URL: HttpUrl
+    CUSTOM_EMOJI_PLACEHOLDER_FILE_ID: str
+    REGULAR_STICKER_PLACEHOLDER_FILE_ID: str
 
     class Config:
         env_file = '.env'
