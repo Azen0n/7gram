@@ -14,9 +14,9 @@ from sevengram.keyboards.emoji_pack import (
 from sevengram.models import StickerType, User
 from sevengram.services import (
     EmojiAddService,
-    EmojiPackGetService,
-    EmojiPackListService,
     StickerSetCreateService,
+    StickerSetGetService,
+    StickerSetListService,
 )
 
 emoji_pack_router = Router(name='emoji_pack')
@@ -71,7 +71,10 @@ async def process_title(message: Message, state: FSMContext, user: User) -> None
 @emoji_pack_router.message(Command('listemojipacks'))
 async def list_emoji_packs(message: Message, state: FSMContext, user: User) -> None:
     """Handle a command to list Emoji Packs of a user."""
-    emoji_packs = await EmojiPackListService(user=user).execute()
+    emoji_packs = await StickerSetListService(
+        user=user,
+        type=StickerType.CUSTOM_EMOJI,
+    ).execute()
 
     keyboard = build_emoji_pack_list_keyboard(emoji_packs)
     await state.set_state(EmojiPackInspectState.inspect)
@@ -86,7 +89,7 @@ async def list_emoji_packs(message: Message, state: FSMContext, user: User) -> N
 async def inspect_emoji_pack(query: CallbackQuery, state: FSMContext) -> None:
     """Handle a command to inspect an Emoji Pack of a user."""
     callback_data = EmojiPackCallbackData.unpack(query.data)
-    emoji_pack = await EmojiPackGetService(id=callback_data.id).execute()
+    emoji_pack = await StickerSetGetService(id=callback_data.id).execute()
 
     keyboard = build_emoji_pack_inspect_keyboard()
     # Set active Emoji Pack
