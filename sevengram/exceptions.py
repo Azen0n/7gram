@@ -2,11 +2,11 @@ class ValidationError(Exception):
     """Base Validation error."""
 
 
-class BaseServiceError(Exception):
-    """Base service error."""
+class ServiceError(Exception):
+    """Service error."""
 
 
-class NotFoundError(BaseServiceError):
+class NotFoundError(ServiceError):
     """Object not found error."""
 
 

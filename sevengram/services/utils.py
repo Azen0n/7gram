@@ -4,7 +4,7 @@ from io import BytesIO
 import imageio.v3 as iio
 import numpy as np
 from aiogram.types import BufferedInputFile, InputSticker
-from httpx import TimeoutException
+from httpx import HTTPError, TimeoutException
 from PIL import Image, ImageSequence
 
 from sevengram.api import http_client
@@ -14,7 +14,7 @@ from sevengram.constants import (
     MAX_VIDEO_STICKER_DURATION,
     MAX_VIDEO_STICKER_FPS,
 )
-from sevengram.exceptions import ApiError
+from sevengram.exceptions import ApiError, ServiceError
 from sevengram.models import EmoteFormat
 
 
@@ -24,16 +24,6 @@ def generate_sticker_set_name(bot_username: str) -> str:
     Example: custom_6ffd570fec99468ebe96fa9d04de6952_by_sevengram_bot.
     """
     return f'custom_{uuid.uuid4()}_by_{bot_username}'.replace('-', '')
-
-
-def get_placeholder_emote() -> InputSticker:
-    """Temporary placeholder emote from file system."""
-    return InputSticker(
-        sticker=BufferedInputFile.from_file(path='emote.png'),
-        format='static',
-        emoji_list=['😏'],
-        keywords=['forsenE'],
-    )
 
 
 class EmoteConverter:
@@ -64,12 +54,19 @@ class EmoteConverter:
         image = await self._get_image_from_url()
 
         # Transform Image to suitable file in bytes
-        if self._emote_format == EmoteFormat.VIDEO:
-            emoji_bytes = self._transform_image_to_webm_bytes(image)
-            file_extension = 'webm'
-        else:
-            emoji_bytes = self._transform_image_to_webp_bytes(image)
-            file_extension = 'webp'
+        file_extension = '???'
+        try:
+            if self._emote_format == EmoteFormat.VIDEO:
+                file_extension = 'webm'
+                emoji_bytes = self._transform_image_to_webm_bytes(image)
+            else:
+                file_extension = 'webp'
+                emoji_bytes = self._transform_image_to_webp_bytes(image)
+        except Exception as e:
+            raise ServiceError(
+                f'Failed to convert {self._emote_format} Emote '
+                f'to {file_extension} file: {e}',
+            ) from e
 
         input_file = BufferedInputFile(
             file=emoji_bytes,
@@ -85,8 +82,11 @@ class EmoteConverter:
     async def _get_image_from_url(self) -> Image:
         try:
             response = await http_client.get(self._image_url, timeout=10)
+            response.raise_for_status()
         except TimeoutException as e:
             raise ApiError('Connection to 7TV timed out.') from e
+        except HTTPError as e:
+            raise ApiError('Failed to fetch emote image.') from e
         return Image.open(BytesIO(response.content))
 
     def _transform_image_to_webp_bytes(self, image: Image) -> bytes:
@@ -109,6 +109,9 @@ class EmoteConverter:
             frame = resized_frame.convert('RGBA')
             frames.append(np.array(frame))
             durations.append(frame.info.get('duration', 100))
+
+        if not frames:
+            raise ServiceError('No frames found.')
 
         # Calculate FPS based on average frame duration in ms
         avg_duration = sum(durations) / len(durations)

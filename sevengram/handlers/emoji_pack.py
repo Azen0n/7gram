@@ -5,18 +5,18 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
-from sevengram.constants import EmojiPackInspectAction
+from sevengram.constants import StickerSetInspectAction
 from sevengram.keyboards.emoji_pack import (
     EmojiPackCallbackData,
     build_emoji_pack_inspect_keyboard,
     build_emoji_pack_list_keyboard,
 )
-from sevengram.models import User
+from sevengram.models import StickerType, User
 from sevengram.services import (
-    EmojiAddService,
-    EmojiPackCreateService,
-    EmojiPackGetService,
-    EmojiPackListService,
+    CustomEmojiAddService,
+    StickerSetCreateService,
+    StickerSetGetService,
+    StickerSetListService,
 )
 
 emoji_pack_router = Router(name='emoji_pack')
@@ -51,9 +51,10 @@ async def process_title(message: Message, state: FSMContext, user: User) -> None
     await state.update_data(title=message.text)
     data = await state.get_data()
 
-    emoji_pack_name = await EmojiPackCreateService(
+    emoji_pack_name = await StickerSetCreateService(
         bot=message.bot,
         user=user,
+        type=StickerType.CUSTOM_EMOJI,
         **data,
     ).execute()
 
@@ -70,7 +71,10 @@ async def process_title(message: Message, state: FSMContext, user: User) -> None
 @emoji_pack_router.message(Command('listemojipacks'))
 async def list_emoji_packs(message: Message, state: FSMContext, user: User) -> None:
     """Handle a command to list Emoji Packs of a user."""
-    emoji_packs = await EmojiPackListService(user=user).execute()
+    emoji_packs = await StickerSetListService(
+        user=user,
+        type=StickerType.CUSTOM_EMOJI,
+    ).execute()
 
     keyboard = build_emoji_pack_list_keyboard(emoji_packs)
     await state.set_state(EmojiPackInspectState.inspect)
@@ -85,7 +89,7 @@ async def list_emoji_packs(message: Message, state: FSMContext, user: User) -> N
 async def inspect_emoji_pack(query: CallbackQuery, state: FSMContext) -> None:
     """Handle a command to inspect an Emoji Pack of a user."""
     callback_data = EmojiPackCallbackData.unpack(query.data)
-    emoji_pack = await EmojiPackGetService(id=callback_data.id).execute()
+    emoji_pack = await StickerSetGetService(id=callback_data.id).execute()
 
     keyboard = build_emoji_pack_inspect_keyboard()
     # Set active Emoji Pack
@@ -102,7 +106,7 @@ async def inspect_emoji_pack(query: CallbackQuery, state: FSMContext) -> None:
 
 @emoji_pack_router.callback_query(
     EmojiPackInspectState.add_emoji,
-    F.data == EmojiPackInspectAction.ADD,
+    F.data == StickerSetInspectAction.ADD,
 )
 async def add_emoji_waiting_for_url(query: CallbackQuery) -> None:
     """Handle a command to add a new Emoji to an Emoji Pack.
@@ -121,9 +125,9 @@ async def add_emoji(message: Message, state: FSMContext) -> None:
     """Handle a command to add a new Emoji to an Emoji Pack."""
     data = await state.get_data()
 
-    emote_name = await EmojiAddService(
+    emote_name = await CustomEmojiAddService(
         bot=message.bot,
-        emoji_pack=data['inspect']['emoji_pack'],
+        sticker_set=data['inspect']['emoji_pack'],
         emote_url=message.text,
     ).execute()
 

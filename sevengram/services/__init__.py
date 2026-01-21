@@ -1,11 +1,11 @@
-from .emoji_add import EmojiAddService
-from .emoji_pack_create import EmojiPackCreateService
-from .emoji_pack_get import EmojiPackGetService
-from .emoji_pack_list import EmojiPackListService
+from .custom_emoji_add import CustomEmojiAddService
+from .sticker_set_create import StickerSetCreateService
+from .sticker_set_get import StickerSetGetService
+from .sticker_set_list import StickerSetListService
 
 __all__ = [
-    'EmojiPackCreateService',
-    'EmojiPackListService',
-    'EmojiPackGetService',
-    'EmojiAddService',
+    'StickerSetCreateService',
+    'StickerSetListService',
+    'StickerSetGetService',
+    'CustomEmojiAddService',
 ]

@@ -5,31 +5,32 @@ from sevengram.models import StickerSet, StickerType, User
 from sevengram.repositories.base import BaseRepository
 
 
-class EmojiPackRepository(BaseRepository):
+class StickerSetRepository(BaseRepository):
     async def create(
         self,
         user: User,
         name: str,
         title: str,
+        type: StickerType,
     ) -> StickerSet:
-        """Create a new Emoji Pack."""
-        emoji_pack = StickerSet(
+        """Create a new Sticker Set."""
+        sticker_set = StickerSet(
             user=user,
             name=name,
             title=title,
-            type=StickerType.CUSTOM_EMOJI,
+            type=type,
         )
-        self._session.add(emoji_pack)
+        self._session.add(sticker_set)
         await self._session.flush()
-        return emoji_pack
+        return sticker_set
 
-    async def list_all(self, user: User) -> list[StickerSet]:
-        """Select all user's Emoji Packs."""
+    async def list_all(self, user: User, type: StickerType) -> list[StickerSet]:
+        """Select all user's Sticker Sets."""
         stmt = (
             select(StickerSet)
             .where(
                 StickerSet.user_id == user.id,
-                StickerSet.type == StickerType.CUSTOM_EMOJI,
+                StickerSet.type == type,
             )
             .order_by(StickerSet.created_at)
         )
@@ -37,13 +38,10 @@ class EmojiPackRepository(BaseRepository):
         return result.scalars().all()  # type: ignore
 
     async def get(self, id: int) -> StickerSet | None:
-        """Get an Emoji Pack by id."""
+        """Get a Sticker Set by id."""
         stmt = (
             select(StickerSet)
-            .where(
-                StickerSet.id == id,
-                StickerSet.type == StickerType.CUSTOM_EMOJI,
-            )
+            .where(StickerSet.id == id)
             .options(joinedload(StickerSet.user))
         )
         result = await self._session.execute(stmt)
