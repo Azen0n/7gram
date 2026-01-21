@@ -26,6 +26,7 @@ class SevenTvApiClient(BaseApiClient):
             query getEmote($id: ID!) {
               emotes {
                 emote(id: $id) {
+                  id,
                   defaultName,
                   flags {
                     animated,

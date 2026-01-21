@@ -20,7 +20,7 @@ class EmoteRepository(BaseRepository):
 
     async def create(
         self,
-        file_id: str | None,
+        file_id: str,
         source: EmoteSource,
         external_id: str,
         name: str,

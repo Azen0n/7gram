@@ -1,10 +1,23 @@
 from enum import StrEnum, auto
 
+from sevengram.models.emote_format import EmoteFormat
+
 
 class StickerSetInspectAction(StrEnum):
     """Available actions while inspecting a Sticker Set."""
 
     ADD = auto()
+
+
+EMOTE_FORMAT_SEVENTV_EXTENSION_MAP = {
+    EmoteFormat.STATIC: 'webp',
+    EmoteFormat.VIDEO: 'avif',
+}
+
+EMOTE_FORMAT_TELEGRAM_EXTENSION_MAP = {
+    EmoteFormat.STATIC: 'webp',
+    EmoteFormat.VIDEO: 'webm',
+}
 
 
 DEFAULT_EMOJI = '⬜️'
