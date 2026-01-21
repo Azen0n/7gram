@@ -13,7 +13,7 @@ from sevengram.keyboards.emoji_pack import (
 )
 from sevengram.models import StickerType, User
 from sevengram.services import (
-    EmojiAddService,
+    CustomEmojiAddService,
     StickerSetCreateService,
     StickerSetGetService,
     StickerSetListService,
@@ -125,9 +125,9 @@ async def add_emoji(message: Message, state: FSMContext) -> None:
     """Handle a command to add a new Emoji to an Emoji Pack."""
     data = await state.get_data()
 
-    emote_name = await EmojiAddService(
+    emote_name = await CustomEmojiAddService(
         bot=message.bot,
-        emoji_pack=data['inspect']['emoji_pack'],
+        sticker_set=data['inspect']['emoji_pack'],
         emote_url=message.text,
     ).execute()
 

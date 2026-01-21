@@ -21,25 +21,25 @@ from sevengram.repositories import EmoteRepository, StickerRepository
 from sevengram.services.utils import EmoteConverter
 
 
-class EmojiAddService:
+class CustomEmojiAddService:
     def __init__(
         self,
         bot: Bot,
-        emoji_pack: StickerSet,
+        sticker_set: StickerSet,
         emote_url: str,
     ):
-        """Service that adds an Emoji to an Emoji Pack from 7TV Emote URL.
+        """Service that adds a Custom Emoji to a Sticker Set from 7TV Emote URL.
 
         :param bot: Telegram bot instance.
-        :param emoji_pack: Emoji Pack to add to.
+        :param sticker_set: Sticker Set to add to.
         :param emote_url: Emote 7TV URL.
         """
         self._bot = bot
-        self._emoji_pack = emoji_pack
+        self._sticker_set = sticker_set
         self._emote_url = emote_url
 
     async def execute(self) -> str:
-        """Add an Emoji to an Emoji Pack.
+        """Add a Custom Emoji to a Sticker Set.
 
         :return: Emote name.
         """
@@ -73,7 +73,12 @@ class EmojiAddService:
         return emote.name
 
     def _validate(self, url_host: str):
+        self._validate_sticker_set()
         self._validate_emote_url(url_host)
+
+    def _validate_sticker_set(self):
+        if self._sticker_set.type != StickerType.CUSTOM_EMOJI:
+            raise ValidationError('You can only add an Emoji to an Emoji Pack.')
 
     def _validate_emote_url(self, url_host: str):
         if url_host != settings.SEVENTV_URL.host:
@@ -135,7 +140,7 @@ class EmojiAddService:
                 type=StickerType.CUSTOM_EMOJI,
                 emoji=DEFAULT_EMOJI,
                 emote_id=emote.id,
-                sticker_set_id=self._emoji_pack.id,
+                sticker_set_id=self._sticker_set.id,
             )
 
     async def _prepare_input_emoji(self, emote: Emote) -> InputSticker:
@@ -156,14 +161,14 @@ class EmojiAddService:
         ).convert()
 
     async def _add_in_telegram(self, input_emoji: InputSticker) -> bool:
-        """Add Emoji to Emoji Pack in Telegram.
+        """Add an Emoji to a Sticker Set in Telegram.
 
         :return: is_created flag.
         """
         try:
             return await self._bot.add_sticker_to_set(
-                user_id=self._emoji_pack.user.telegram_id,
-                name=self._emoji_pack.name,
+                user_id=self._sticker_set.user.telegram_id,
+                name=self._sticker_set.name,
                 sticker=input_emoji,
             )
         except TelegramBadRequest as e:
