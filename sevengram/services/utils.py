@@ -3,14 +3,13 @@ from io import BytesIO
 
 import imageio.v3 as iio
 import numpy as np
-from aiogram.types import BufferedInputFile, InputSticker
 from httpx import HTTPError, TimeoutException
 from PIL import Image, ImageSequence
 
 from sevengram.api import http_client
 from sevengram.constants import (
     CUSTOM_EMOJI_DIMENSIONS,
-    DEFAULT_EMOJI,
+    EMOTE_FORMAT_TELEGRAM_EXTENSION_MAP,
     MAX_VIDEO_STICKER_DURATION,
     MAX_VIDEO_STICKER_FPS,
 )
@@ -26,72 +25,61 @@ def generate_sticker_set_name(bot_username: str) -> str:
     return f'custom_{uuid.uuid4()}_by_{bot_username}'.replace('-', '')
 
 
-class EmoteConverter:
+async def fetch_emote_image(file_url: str) -> bytes:
+    """Download image from URL."""
+    try:
+        response = await http_client.get(file_url, timeout=10)
+        response.raise_for_status()
+    except TimeoutException as e:
+        raise ApiError('Connection to 7TV timed out.') from e
+    except HTTPError as e:
+        raise ApiError('Failed to fetch an Emote image.') from e
+    if not response.headers.get('content-type', '').startswith('image'):
+        raise ApiError('Emote file is not an Image.')
+    return response.content
+
+
+class CustomEmojiImageConverter:
     def __init__(
         self,
-        image_url: str,
-        emote_name: str,
+        image_file: bytes,
         emote_format: EmoteFormat,
     ):
-        """Emote image converter.
+        """Custom Emoji image converter.
 
-        Downloads and converts image to one of suitable Telegram formats:
+        Converts image to one of suitable Telegram formats:
         1. 100x100 pixels .WEBP file for 'static' emotes.
         2. 100x100 pixels .WEBM file for 'video' (animated) emotes.
 
-        :param image_url: Emote image URL.
-        :param emote_name: Emote name.
+        :param image_file: Emote image file.
         :param emote_format: Emote format for Telegram.
         """
 
-        self._image_url = image_url
-        self._emote_name = emote_name
+        self._image = Image.open(BytesIO(image_file))
         self._emote_format = emote_format
 
-    async def convert(self) -> InputSticker:
-        """Convert Emote image to InputSticker."""
-        # Download Image from URL
-        image = await self._get_image_from_url()
+    def convert(self) -> bytes:
+        """Convert Emote image to suitable Telegram format."""
+        emote_format_method_map = {
+            EmoteFormat.STATIC: self._transform_image_to_webp_bytes,
+            EmoteFormat.VIDEO: self._transform_image_to_webm_bytes,
+        }
+        transform_method = emote_format_method_map[self._emote_format]
+        file_extension = EMOTE_FORMAT_TELEGRAM_EXTENSION_MAP[self._emote_format]
 
-        # Transform Image to suitable file in bytes
-        file_extension = '???'
         try:
-            if self._emote_format == EmoteFormat.VIDEO:
-                file_extension = 'webm'
-                emoji_bytes = self._transform_image_to_webm_bytes(image)
-            else:
-                file_extension = 'webp'
-                emoji_bytes = self._transform_image_to_webp_bytes(image)
+            emoji_bytes = transform_method()
         except Exception as e:
             raise ServiceError(
                 f'Failed to convert {self._emote_format} Emote '
                 f'to {file_extension} file: {e}',
             ) from e
 
-        input_file = BufferedInputFile(
-            file=emoji_bytes,
-            filename=f'{self._emote_name}.{file_extension}',
-        )
-        return InputSticker(
-            sticker=input_file,
-            format=self._emote_format,
-            emoji_list=[DEFAULT_EMOJI],
-            keywords=[self._emote_name],
-        )
+        return emoji_bytes
 
-    async def _get_image_from_url(self) -> Image:
-        try:
-            response = await http_client.get(self._image_url, timeout=10)
-            response.raise_for_status()
-        except TimeoutException as e:
-            raise ApiError('Connection to 7TV timed out.') from e
-        except HTTPError as e:
-            raise ApiError('Failed to fetch emote image.') from e
-        return Image.open(BytesIO(response.content))
-
-    def _transform_image_to_webp_bytes(self, image: Image) -> bytes:
+    def _transform_image_to_webp_bytes(self) -> bytes:
         """Transform static image to suitable .WEBP image for Telegram."""
-        resized_image = image.resize(size=CUSTOM_EMOJI_DIMENSIONS)
+        resized_image = self._image.resize(size=CUSTOM_EMOJI_DIMENSIONS)
 
         # Save to bytes
         buffer = BytesIO()
@@ -99,12 +87,12 @@ class EmoteConverter:
         buffer.seek(0)
         return buffer.getvalue()
 
-    def _transform_image_to_webm_bytes(self, image: Image) -> bytes:
+    def _transform_image_to_webm_bytes(self) -> bytes:
         """Transform animated image to suitable .WEBM video for Telegram."""
         frames = []
         durations = []
 
-        for frame in ImageSequence.Iterator(image):
+        for frame in ImageSequence.Iterator(self._image):
             resized_frame = frame.resize(CUSTOM_EMOJI_DIMENSIONS)
             frame = resized_frame.convert('RGBA')
             frames.append(np.array(frame))

@@ -12,7 +12,7 @@ class Emote(Base):
     """An Emote."""
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    file_id: Mapped[str | None]
+    file_id: Mapped[str]
     """File identifier, which can be used to reuse the file on Telegram servers."""
 
     source: Mapped[EmoteSource] = mapped_column(Enum(EmoteSource))
