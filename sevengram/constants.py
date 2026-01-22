@@ -13,11 +13,13 @@ EMOTE_FORMAT_SEVENTV_EXTENSION_MAP = {
     EmoteFormat.STATIC: 'webp',
     EmoteFormat.VIDEO: 'avif',
 }
+"""Mapping of an Emote format to an image file extension in 7TV."""
 
 EMOTE_FORMAT_TELEGRAM_EXTENSION_MAP = {
     EmoteFormat.STATIC: 'webp',
     EmoteFormat.VIDEO: 'webm',
 }
+"""Mapping of an Emote format to a sticker-compatible file extension in Telegram."""
 
 
 DEFAULT_EMOJI = '⬜️'
